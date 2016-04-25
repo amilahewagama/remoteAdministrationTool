@@ -69,6 +69,42 @@ def listClients(args):
 ###END listClients
 
 ####COMMAND
+def transferClients(args):
+    if len(args) >= 0:
+        print("Transfering all clients to " + args[0])
+        for client in clients:
+            mess = "transfer " + args[0]
+            client[0].send(mess.encode())
+            client[0].close()
+            clients.remove(client)
+    else:
+        print("Invalid arguments!!! Proper:   transfer <Server address>")
+###END transferClients
+
+####COMMAND
+def killClient(args):
+    if len(args) > 0:
+        for client in clients:
+            if str(client[1][0]) == args[0]:
+                print("\nDropping client: " , client[1])
+                client[0].send(b"KILLED")
+                client[0].close()
+                clients.remove(client)
+                print("Done dropping client\n")
+    else:
+        print("Invalid arguments!!! Proper:   kill <Node address>")
+####COMMAND
+def showHelp(args):
+    print("\n")
+    print("----HELP----")
+    print("exit  --Drops all clients and stops the server")
+    print("node <Node address>  --Drops into nodes shell")
+    print("transfer <Server address>  --Transfers all clients to given server address")
+    print("list  --Displays all connected clients")
+    print("help  --Displays help")
+###END showHelp
+
+####COMMAND
 def selectNode(args):
     global selectedNode
     if len(args) >= 1:
@@ -76,13 +112,14 @@ def selectNode(args):
             if str(client[1][0]) == args[0]:
                 selectedNode = client[1][0]
                 print("Node ", client[1][0], " selected! \n")
+                print("Run exitN to exit node")
         if selectedNode is "":
             print("Entered node address is invalid", selectedNode)
     else:
         print("Invalid arguments!!! Proper:   node <Node address>")
 
 def runCommand(command, args):
-    methods = { "dispPing" : displayPing , "exit" : exitServer, "list" : listClients, "node" : selectNode }
+    methods = { "dispPing" : displayPing , "exit" : exitServer, "list" : listClients, "node" : selectNode, "kill" : killClient, "help" : showHelp, "transfer" : transferClients }
     if command in methods:
         methods[command](args) # + argument list of course
     else:
@@ -106,7 +143,7 @@ def runNode(command, args):
         args = ' '.join(args)
         mess = (command + " " + args).encode()
         nodeSocket.send(mess)
-###END runCommand
+###END runNode
 
 
 #Function that manages clients and dropped clients
@@ -167,12 +204,12 @@ def socketInput(socketName, socket):
             cmd = line[0]
             line.remove(cmd)
             args = line
-            print("Client: ", socketName)
-            print("Command: ", cmd)
-            print("Args: ", args)
+            print(mess)
+            if str(selectedNode) == str(socketName):
+                print(mess)
 
-    print ("Client recv thread (" , socketName, ") has ended!")
-
+    #print ("Client recv thread (" , socketName, ") has ended!")
+###END socketInput
 
 
 
