@@ -9,6 +9,7 @@ isReady = 1
 isRunning = 1
 displayPings = 0
 doPing = 1
+threadsRunning = 1
 clients = []
 selectedNode = ""
 
@@ -20,10 +21,11 @@ sock.listen(1)
 
 ####COMMAND
 def exitServer(args):
-    global clients, isReady, isRunning, doPing, sock
+    global clients, isReady, isRunning, doPing, sock, threadsRunning
     print("Exiting server...");
     if len(clients) >= 1:
         print("!!--!!Dropping clients!!--!!")
+        threadsRunning = 0
         for client in clients:
             print("Dropping client: " , client[1])
             client[0].send(b"DROPPED")
@@ -145,9 +147,31 @@ def inputFunc():
     return
 ###END inputFunc
 
-def socketInput():
+def socketInput(socketName, socket):
+    isRunning = 1
+    while isRunning and threadsRunning:
 
+        for client in clients:
+            if socketName in client:
+                isRunning = 1
+            else:
+                isRunning = 0
 
+        try:
+            mess = socket.recv(1024).decode()
+        except Exception as e:
+            #print("Client dropped connection :(")
+            isRunning = 0
+        line = mess.split()
+        if len(line) >= 1:
+            cmd = line[0]
+            line.remove(cmd)
+            args = line
+            print("Client: ", socketName)
+            print("Command: ", cmd)
+            print("Args: ", args)
+
+    print ("Client recv thread (" , socketName, ") has ended!")
 
 
 
@@ -169,8 +193,16 @@ while isReady:
     connection, client_address = sock.accept()
     try:
         if isReady:
+
             print( 'connection from ', client_address)
             clients.append([connection, client_address])
+            try:
+               clientRecv = threading.Thread(target=socketInput, args=(client_address,connection))
+               clientRecv.daemon = 0
+               clientRecv.start()
+            except Exception:
+               print("Error starting client thread: ", Exception.error)
+
     except Exception:
         print("Error: ", Exception)
 import sys; sys.exit()

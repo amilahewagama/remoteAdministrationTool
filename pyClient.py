@@ -28,7 +28,6 @@ def connect():
             running()
         except Exception as e:
             if e.errno is 111:
-                print(str(e))
                 time.sleep(5)
                 connect()
             else:
@@ -41,7 +40,7 @@ def running():
         time.sleep(2)
         if isConnected:
             try:
-                sock.send(b"Hello server!")
+                sock.send(b"")
             except Exception as e:
                 sock.close()
                 isConnected = 0
@@ -119,7 +118,11 @@ def processCommand(cmd, args):
     elif cmd == "transfer":
         server_address = (str(args[0]), 10000)
         disconnect()
+    elif cmd == "DROPPED":
+        disconnect()
     else:
+        args = ' '.join(args)
+        mess = cmd + " " + args
         print("Got: ", mess)
         os.system(mess)
 
