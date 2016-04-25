@@ -71,11 +71,9 @@ def selectNode(args):
     global selectedNode
     if len(args) >= 1:
         for client in clients:
-            print(args[0])
-            print(client[1][0])
             if str(client[1][0]) == args[0]:
                 selectedNode = client[1][0]
-                print("Node ", client[1][0], " selected!")
+                print("Node ", client[1][0], " selected! \n")
         if selectedNode is "":
             print("Entered node address is invalid", selectedNode)
     else:
@@ -147,6 +145,7 @@ def inputFunc():
     return
 ###END inputFunc
 
+def socketInput():
 
 
 
