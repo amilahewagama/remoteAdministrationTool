@@ -107,6 +107,7 @@ def showHelp(args):
     print("list  --Displays all connected clients")
     print("sendAll <Command>  --Sends the command to all nodes")
     print("cl  --Clears the screen")
+    print("kill <Node address> --Sends KILLED to node and drops the node. This makes the client permanently disconnect")
     print("help  --Displays help")
 ###END showHelp
 
