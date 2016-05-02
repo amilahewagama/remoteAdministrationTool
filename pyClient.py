@@ -5,14 +5,18 @@ import threading
 import os
 import platform
 
+pid = str(os.getpid())
+#Dont change this unless you know what you are doing
+pidfile = "/tmp/system/criticalStatus.pid"
+
 isConnected = 0
 sock = None
 running = 1
 inputThread = None
 isSetup = 0
-#Insert server address to connect to. 
+#Insert server address to connect to.
 server_address = ('<SERVER ADDRESS>', 25565)
-doOutput = 0
+doOutput = 0 #If you want the program to display output then make this 1
 
 
 def connect():
@@ -21,7 +25,7 @@ def connect():
     if running:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         isConnected = 0
-        #setupThreadOne() Input thread
+        setupThreadOne() if doOutput else None
         # Connect the socket to the port where the server is listening
         print('connecting to %s port %s' % server_address) if doOutput else None
         try:
@@ -175,4 +179,16 @@ def recvFunc():
 
 ###END recvFunc
 
-connect()
+
+if os.path.isfile(pidfile):
+    print("%s already exists, exiting" % pidfile) if doOutput else None
+    sys.exit()
+
+try:
+    file = open(pidfile,'w')
+    file.write(pid)
+    file.close()
+    connect()
+
+finally:
+    os.unlink(pidfile)
