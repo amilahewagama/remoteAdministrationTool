@@ -2,6 +2,7 @@ import socket
 import sys
 import time
 import threading
+import os
 
 #Create socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -14,7 +15,8 @@ clients = []
 selectedNode = ""
 
 #Bind sockt to address and port and listen for clients
-server_address = ('192.168.1.8', 10000)
+#Enter the current server address
+server_address = ('<CURRENT SERVER ADDRESS>', 10000)
 print('starting up on %s port %s' % server_address)
 sock.bind(server_address)
 sock.listen(1)
@@ -28,6 +30,7 @@ def exitServer(args):
         threadsRunning = 0
         for client in clients:
             print("Dropping client: " , client[1])
+            time.sleep(1)
             client[0].send(b"DROPPED")
             client[0].close()
             clients.remove(client)
@@ -73,6 +76,7 @@ def transferClients(args):
     if len(args) >= 0:
         print("Transfering all clients to " + args[0])
         for client in clients:
+            time.sleep(1)
             mess = "transfer " + args[0]
             client[0].send(mess.encode())
             client[0].close()
@@ -101,8 +105,30 @@ def showHelp(args):
     print("node <Node address>  --Drops into nodes shell")
     print("transfer <Server address>  --Transfers all clients to given server address")
     print("list  --Displays all connected clients")
+    print("sendAll <Command>  --Sends the command to all nodes")
+    print("cl  --Clears the screen")
     print("help  --Displays help")
 ###END showHelp
+
+####COMMAND
+def clearScreen(args):
+    os.system('cls' if os.name == 'nt' else 'clear')
+###END of clearScreen
+
+####COMMAND
+def sendAll(args):
+    if len(args) >= 1:
+        args = " ".join(args)
+        for client in clients:
+            time.sleep(1)
+            try:
+                client[0].send(args.encode())
+            except Exception:
+                None
+    else:
+        print("Invalid arguments!!! Proper:  sendAll <Command>")
+###END sendAll
+
 
 ####COMMAND
 def selectNode(args):
@@ -117,9 +143,10 @@ def selectNode(args):
             print("Entered node address is invalid", selectedNode)
     else:
         print("Invalid arguments!!! Proper:   node <Node address>")
+###END selectNode
 
 def runCommand(command, args):
-    methods = { "dispPing" : displayPing , "exit" : exitServer, "list" : listClients, "node" : selectNode, "kill" : killClient, "help" : showHelp, "transfer" : transferClients }
+    methods = { "dispPing" : displayPing , "exit" : exitServer, "list" : listClients, "node" : selectNode, "kill" : killClient, "help" : showHelp, "transfer" : transferClients, "sendAll" : sendAll, "cl" : clearScreen }
     if command in methods:
         methods[command](args) # + argument list of course
     else:
@@ -130,6 +157,7 @@ def exitNode(args):
     global selectedNode
     if selectedNode != "":
         selectedNode = ""
+###END exitNode
 
 def runNode(command, args):
     methods = {"exitN" : exitNode}
@@ -144,7 +172,6 @@ def runNode(command, args):
         mess = (command + " " + args).encode()
         nodeSocket.send(mess)
 ###END runNode
-
 
 #Function that manages clients and dropped clients
 def pingClients():
@@ -170,6 +197,7 @@ def inputFunc():
     while isRunning:
         prefix = selectedNode + ">"
         line = input(prefix)
+        print("")
         line = line.split()
         if len(line) >= 1:
             cmd = line[0]
