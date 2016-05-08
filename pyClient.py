@@ -5,10 +5,6 @@ import threading
 import os
 import platform
 
-pid = str(os.getpid())
-#Dont change this unless you know what you are doing
-pidfile = "/tmp/system/criticalStatus.pid"
-
 isConnected = 0
 sock = None
 running = 1
@@ -178,6 +174,27 @@ def recvFunc():
             processCommand(cmd, args)
 
 ###END recvFunc
+
+#Start os check
+if platform.system() == "Linux":
+    print("System is linux") if doOutput else None
+
+    #Check linux distro
+    plat = platform.release()
+    if plat.find("ARCH") != -1:
+        print("System is arch linux") if doOutput else None
+    else:
+        print("System is linux but not arch") if doOutput else None
+    #End distro check
+
+    pid = str(os.getpid())
+    #Dont change this unless you know what you are doing
+    pidfile = "/tmp/system/criticalStatus.pid"
+
+elif platform.system() == "Windows":
+    print("System is windows") if doOutput else None
+
+#End of os check
 
 
 if os.path.isfile(pidfile):
